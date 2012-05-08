@@ -1746,4 +1746,170 @@ class TwitterCrawler {
         $this->logger->logUserSuccess("Added $fcount older missed favorites", __METHOD__.','.__LINE__);
         return true;
     }
+
+    /**
+     * Calculate and store insight baselines for the last 7 days.
+     */
+    public function generateInsightBaselines() {
+        $post_dao = DAOFactory::getDAO('PostDAO');
+        $insight_baseline_dao = DAOFactory::getDAO('InsightBaselineDAO');
+
+        $days_ago = 0;
+        // Generate baseline post insights for the last 7 days
+        $this->logger->logUserSuccess("Calculating insight baselines for last 7 days.", __METHOD__.','.__LINE__);
+
+        while ($days_ago < 7) {
+            $since_date = date("Y-m-d", strtotime("-".$days_ago." day"));
+
+            //Save average retweets over past 7 days
+            $average_retweet_count_7_days = null;
+            $average_retweet_count_7_days = $post_dao->getAverageRetweetCount($this->instance->network_username,
+            $this->instance->network, 7, $since_date);
+            if ($average_retweet_count_7_days != null ) {
+                $insight_baseline_dao->insertInsightBaseline('avg_retweet_count_last_7_days', $this->instance->id,
+                $average_retweet_count_7_days, $since_date);
+                $this->logger->logSuccess("Averaged $average_retweet_count_7_days retweets in the 7 days before ".
+                $since_date, __METHOD__.','.__LINE__);
+            }
+            //Save average retweets over past 30 days
+            $average_retweet_count_30_days = null;
+            $average_retweet_count_30_days = $post_dao->getAverageRetweetCount($this->instance->network_username,
+            $this->instance->network, 30, $since_date);
+            if ($average_retweet_count_30_days != null ) {
+                $insight_baseline_dao->insertInsightBaseline('avg_retweet_count_last_30_days', $this->instance->id,
+                $average_retweet_count_30_days, $since_date);
+                $this->logger->logSuccess("Averaged $average_retweet_count_30_days retweets in the 30 days before ".
+                $since_date, __METHOD__.','.__LINE__);
+            }
+
+            //Save retweet high for last 7 days
+            $high_retweet_count_7_days = $post_dao->getAllPostsByUsernameOrderedBy($this->instance->network_username,
+            $network="twitter", 1, 'retweets', 7, $iterator = false, $is_public = false, $since=$since_date);
+            if ($high_retweet_count_7_days != null ) {
+                $high_retweet_count_7_days = $high_retweet_count_7_days[0]->all_retweets;
+                $insight_baseline_dao->insertInsightBaseline('high_retweet_count_last_7_days', $this->instance->id,
+                $high_retweet_count_7_days, $since_date);
+                $this->logger->logSuccess("High of $high_retweet_count_7_days retweets in the 7 days before ".
+                $since_date, __METHOD__.','.__LINE__);
+            }
+
+            //Save retweet high for last 30 days
+            $high_retweet_count_30_days = $post_dao->getAllPostsByUsernameOrderedBy($this->instance->network_username,
+            $network="twitter", 1, 'retweets', 30, $iterator = false, $is_public = false, $since=$since_date);
+            if ($high_retweet_count_30_days != null ) {
+                $high_retweet_count_30_days = $high_retweet_count_30_days[0]->all_retweets;
+                $insight_baseline_dao->insertInsightBaseline('high_retweet_count_last_30_days', $this->instance->id,
+                $high_retweet_count_30_days, $since_date);
+                $this->logger->logSuccess("High of $high_retweet_count_30_days retweets in the 30 days before ".
+                $since_date, __METHOD__.','.__LINE__);
+            }
+
+            //Save retweet high for last 365 days
+            $high_retweet_count_365_days = $post_dao->getAllPostsByUsernameOrderedBy($this->instance->network_username,
+            $network="twitter", 1, 'retweets', 365, $iterator = false, $is_public = false, $since=$since_date);
+            if ($high_retweet_count_365_days != null ) {
+                $high_retweet_count_365_days = $high_retweet_count_365_days[0]->all_retweets;
+                $insight_baseline_dao->insertInsightBaseline('high_retweet_count_last_365_days', $this->instance->id,
+                $high_retweet_count_365_days, $since_date);
+                $this->logger->logSuccess("High of $high_retweet_count_365_days retweets in the 365 days before ".
+                $since_date, __METHOD__.','.__LINE__);
+            }
+
+            $days_ago++;
+        }
+    }
+    /**
+     * Calculate and store insights for the last 7 days.
+     */
+    public function generateInsights() {
+        $post_dao = DAOFactory::getDAO('PostDAO');
+        $insight_baseline_dao = DAOFactory::getDAO('InsightBaselineDAO');
+        $insight_dao = DAOFactory::getDAO('InsightDAO');
+
+        $this->logger->logUserSuccess("Calculating insights for last 7 days' worth of posts.", __METHOD__.','.__LINE__);
+
+        // Get retweeted posts for last 7 days
+        $posts = $post_dao->getMostRetweetedPostsInLastWeek($this->instance->network_username,
+        $this->instance->network, 40, $is_public = false);
+        $posts = $post_dao->getAllPostsByUsernameOrderedBy($this->instance->network_username, $network="twitter",
+        $count=0, $order_by="pub_date", $in_last_x_days = 7, $iterator = false, $is_public = false);
+
+        $baseline_date = null;
+        // foreach post
+        foreach ($posts as $post) {
+            $simplified_post_date = date('Y-m-d', strtotime($post->pub_date));
+
+            if ($simplified_post_date != $baseline_date) { //need to get baselines
+                $average_retweet_count_7_days =
+                $insight_baseline_dao->getInsightBaseline('avg_retweet_count_last_7_days', $this->instance->id,
+                $simplified_post_date);
+
+                $average_retweet_count_30_days =
+                $insight_baseline_dao->getInsightBaseline('avg_retweet_count_last_30_days', $this->instance->id,
+                $simplified_post_date);
+
+                $high_retweet_count_7_days =
+                $insight_baseline_dao->getInsightBaseline('high_retweet_count_last_7_days', $this->instance->id,
+                $simplified_post_date);
+
+                $high_retweet_count_30_days =
+                $insight_baseline_dao->getInsightBaseline('high_retweet_count_last_30_days', $this->instance->id,
+                $simplified_post_date);
+
+                $high_retweet_count_365_days =
+                $insight_baseline_dao->getInsightBaseline('high_retweet_count_last_365_days', $this->instance->id,
+                $simplified_post_date);
+
+                $baseline_date = $post->pub_date;
+            }
+            if (isset($high_retweet_count_365_days->value)
+            && $post->all_retweets >= $high_retweet_count_365_days->value) {
+                $insight_dao->insertInsight('retweet_high_365_day', $this->instance->id, $simplified_post_date,
+                "New 365-day high! ".$post->all_retweets." people retweeted your tweet.", Insight::EMPHASIS_HIGH,
+                serialize($post));
+            } elseif (isset($high_retweet_count_30_days->value)
+            && $post->all_retweets >= $high_retweet_count_30_days->value) {
+                $insight_dao->insertInsight('retweet_high_30_day', $this->instance->id, $simplified_post_date,
+                "New 30-day high! ".$post->all_retweets." people retweeted your tweet.", Insight::EMPHASIS_MED,
+                serialize($post));
+            } elseif (isset($high_retweet_count_7_days->value)
+            && $post->all_retweets >= $high_retweet_count_7_days->value) {
+                $insight_dao->insertInsight('retweet_high_7_day', $this->instance->id, $simplified_post_date,
+                "New 7-day high! ".$post->all_retweets." people retweeted your tweet.",
+                Insight::EMPHASIS_MED, serialize($post));
+            } elseif (isset($average_retweet_count_30_days->value)
+            && $post->all_retweets > ($average_retweet_count_30_days->value*2)) {
+                $multiplier = floor($post->all_retweets/$average_retweet_count_30_days->value);
+                $insight_dao->insertInsight('retweet_spike_30_day', $this->instance->id, $simplified_post_date,
+                "Retweet spike! ".$post->all_retweets." people reshared your tweet, more than ".$multiplier.
+                "x your 30-day average.", Insight::EMPHASIS_LOW,
+                serialize($post));
+            } elseif (isset($average_retweet_count_7_days->value)
+            && $post->all_retweets > ($average_retweet_count_7_days->value*2)) {
+                $multiplier = floor($post->all_retweets/$average_retweet_count_7_days->value);
+                $insight_dao->insertInsight('retweet_spike_7_day', $this->instance->id, $simplified_post_date,
+                "Retweet spike! ".$post->all_retweets." people reshared your tweet, more than ".$multiplier.
+                "x your 7-day average.", Insight::EMPHASIS_LOW, serialize($post));
+            }
+        }
+
+        //Generate least likely followers insights
+        $follow_dao = DAOFactory::getDAO('FollowDAO');
+        $days_ago = 0;
+        while ($days_ago < 7) {
+            //For each of the past 7 days (remove this later & just do day by day?)
+            //get least likely followers for that day
+            $least_likely_followers = $follow_dao->getLeastLikelyFollowersByDay($this->instance->network_user_id,
+            'twitter', $days_ago);
+            if (sizeof($least_likely_followers) > 0 ) { //if not null, store insight
+                $insight_date = new DateTime();
+                $insight_date->sub(new DateInterval('P'.$days_ago.'D'));
+                $insight_date = $insight_date->format('Y-m-d');
+                $insight_dao->insertInsight('least_likely_followers', $this->instance->id, $insight_date,
+                "Good people: ".sizeof($least_likely_followers)." interesting users followed you.",
+                Insight::EMPHASIS_LOW, serialize($least_likely_followers));
+            }
+            $days_ago++;
+        }
+    }
 }
