@@ -1903,7 +1903,9 @@ class TwitterCrawler {
             'twitter', $days_ago);
             if (sizeof($least_likely_followers) > 0 ) { //if not null, store insight
                 $insight_date = new DateTime();
-                $insight_date->sub(new DateInterval('P'.$days_ago.'D'));
+                //Not PHP 5.2 compatible
+                //$insight_date->sub(new DateInterval('P'.$days_ago.'D'));
+                $insight_date->modify('-'.$days_ago.' day');
                 $insight_date = $insight_date->format('Y-m-d');
                 $insight_dao->insertInsight('least_likely_followers', $this->instance->id, $insight_date,
                 "Good people: ".sizeof($least_likely_followers)." interesting users followed you.",

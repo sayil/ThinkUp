@@ -74,6 +74,13 @@ class InsightMySQLDAO  extends PDODAO implements InsightDAO {
         $insights = $this->getDataRowsAsObjects($ps, "Insight");
         foreach ($insights as $insight) {
             $insight->related_data = unserialize($insight->related_data);
+            if ($insight->related_data instanceof Post) {
+                $insight->related_data_type = "post";
+            } elseif (is_array($insight->related_data)) {
+                if ($insight->related_data[0] instanceof User) {
+                    $insight->related_data_type = "users";
+                }
+            }
             //assume insight came at same time of day as now for relative day notation
             $insight->date = $insight->date. " ".date('H').":".date('i');
         }

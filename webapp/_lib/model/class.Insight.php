@@ -56,6 +56,11 @@ class Insight {
      */
     var $emphasis;
     /**
+     * Non-persistent value indicating type of related data, for use in UI.
+     * @var str
+     */
+    var $related_data_type;
+    /**
      * High emphasis level.
      * @var int
      */
@@ -76,7 +81,7 @@ class Insight {
             $this->instance_id = $row['instance_id'];
             $this->slug = $row['slug'];
             $this->text = $row['text'];
-            $this->post_key = $row['related_data'];
+            $this->related_data = $row['related_data'];
             $this->date = $row['date'];
             $this->emphasis = $row['emphasis'];
         }
