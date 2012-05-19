@@ -64,7 +64,7 @@ class InsightMySQLDAO  extends PDODAO implements InsightDAO {
     public function getInsights($instance_id, $page_count=10, $page_number=1) {
         $start_on_record = ($page_number - 1) * $page_count;
         $q = "SELECT * FROM #prefix#insights WHERE instance_id=:instance_id ";
-        $q .= "ORDER BY date DESC  LIMIT :start_on_record, :limit;";
+        $q .= "ORDER BY date DESC, id DESC  LIMIT :start_on_record, :limit;";
         $vars = array(
             ':instance_id'=>$instance_id,
             ":start_on_record"=>(int)$start_on_record,
