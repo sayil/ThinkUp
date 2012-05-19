@@ -1971,13 +1971,14 @@ class TwitterCrawler {
                 $follower_count_history_by_week = $follower_count_dao->getHistory($this->instance->network_user_id,
                 $this->instance->network, 'WEEK', 5);
                 if ( isset($follower_count_history_by_week['milestone']) ) {
-                    $insight_text = $follower_count_history_by_week['milestone']['will_take'].' week';
+                    $insight_text = "Upcoming milestone: ";
+                    $insight_text .= $follower_count_history_by_week['milestone']['will_take'].' week';
                     if ($follower_count_history_by_week['milestone']['will_take'] > 1) {
                         $insight_text .= 's';
                     }
                     $insight_text .= ' till you reach '.
                     number_format($follower_count_history_by_week['milestone']['next_milestone']);
-                    $insight_text .= ' followers at this rate.';
+                    $insight_text .= ' followers at your current growth rate.';
 
                     $insight_date_formatted = $insight_date->format('Y-m-d');
                     $insight_dao->insertInsight('follower_count_history_by_week_milestone', $this->instance->id,
@@ -1993,13 +1994,14 @@ class TwitterCrawler {
                 $follower_count_history_by_month = $follower_count_dao->getHistory($this->instance->network_user_id,
                 $this->instance->network, 'MONTH', 5);
                 if ( isset($follower_count_history_by_month['milestone']) ) {
-                    $insight_text = $follower_count_history_by_month['milestone']['will_take'].' month';
+                    $insight_text = "Upcoming milestone: ";
+                    $insight_text .= $follower_count_history_by_month['milestone']['will_take'].' month';
                     if ($follower_count_history_by_month['milestone']['will_take'] > 1) {
                         $insight_text .= 's';
                     }
                     $insight_text .= ' till you reach '.
                     number_format($follower_count_history_by_month['milestone']['next_milestone']);
-                    $insight_text .= ' followers at this rate.';
+                    $insight_text .= ' followers at your current growth rate.';
 
                     $insight_date_formatted = $insight_date->format('Y-m-d');
                     $insight_dao->insertInsight('follower_count_history_by_month_milestone', $this->instance->id,

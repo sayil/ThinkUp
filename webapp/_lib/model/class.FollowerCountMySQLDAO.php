@@ -160,7 +160,7 @@ class FollowerCountMySQLDAO extends PDODAO implements FollowerCountDAO {
                 $milestone['units_of_time'] = $units;
             }
             //only set milestone if it's within 10 to avoid "954 weeks until you reach 1000 followers" messaging
-            if ($milestone['will_take'] > 10) {
+            if ($milestone['will_take'] > 50) {
                 $milestone = null;
             }
         } else  {
