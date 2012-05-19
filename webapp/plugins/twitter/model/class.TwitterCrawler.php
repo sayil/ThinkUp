@@ -1937,7 +1937,7 @@ class TwitterCrawler {
             //For each of the past 7 days (remove this later & just do day by day?)
             //get least likely followers for that day
             $least_likely_followers = $follow_dao->getLeastLikelyFollowersByDay($this->instance->network_user_id,
-            'twitter', $days_ago);
+            'twitter', $days_ago, 3);
             if (sizeof($least_likely_followers) > 0 ) { //if not null, store insight
                 $insight_date = new DateTime();
                 //Not PHP 5.2 compatible

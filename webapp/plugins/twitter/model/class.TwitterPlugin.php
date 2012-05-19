@@ -505,7 +505,7 @@ class TwitterPlugin extends Plugin implements CrawlerPlugin, DashboardPlugin, Po
         $ptab->addDataset($ptabds);
         $menus["links-photos"] = $ptab;
 
-        $insights_menu_item = new MenuItem("Insights", "Insights", 'dashboard.insights.tpl');
+        $insights_menu_item = new MenuItem("Insights", "Insights", 'insights.tpl');
 
         $insights_menu_ds_1 = new Dataset("insights", 'InsightDAO', "getInsights",
         array($instance->id, 25, "#page_number#") );
