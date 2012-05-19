@@ -148,24 +148,24 @@ class TwitterPlugin extends Plugin implements CrawlerPlugin, DashboardPlugin, Po
                 $instance_dao->updateLastRun($instance->id);
 
                 // No auth for public Twitter users
-                $crawler->fetchInstanceUserTweets();
-
-                if (!$noauth) {
-                    // Auth req'd, for calling user only
-                    $crawler->fetchInstanceUserMentions();
-                    $crawler->fetchInstanceUserFriends();
-                    $crawler->fetchInstanceFavorites();
-                    $crawler->fetchInstanceUserFollowers();
-                    $crawler->fetchInstanceUserGroups();
-                    $crawler->fetchRetweetsOfInstanceUser();
-                    $crawler->cleanUpMissedFavsUnFavs();
-                    $crawler->updateStaleGroupMemberships();
-                }
-
-                $crawler->fetchStrayRepliedToTweets();
-                $crawler->fetchUnloadedFollowerDetails();
-                $crawler->cleanUpFollows();
-                $crawler->fetchFriendTweetsAndFriends();
+//                $crawler->fetchInstanceUserTweets();
+//
+//                if (!$noauth) {
+//                    // Auth req'd, for calling user only
+//                    $crawler->fetchInstanceUserMentions();
+//                    $crawler->fetchInstanceUserFriends();
+//                    $crawler->fetchInstanceFavorites();
+//                    $crawler->fetchInstanceUserFollowers();
+//                    $crawler->fetchInstanceUserGroups();
+//                    $crawler->fetchRetweetsOfInstanceUser();
+//                    $crawler->cleanUpMissedFavsUnFavs();
+//                    $crawler->updateStaleGroupMemberships();
+//                }
+//
+//                $crawler->fetchStrayRepliedToTweets();
+//                $crawler->fetchUnloadedFollowerDetails();
+//                $crawler->cleanUpFollows();
+//                $crawler->fetchFriendTweetsAndFriends();
                 $crawler->generateInsightBaselines();
                 $crawler->generateInsights();
 

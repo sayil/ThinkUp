@@ -79,6 +79,8 @@ class InsightMySQLDAO  extends PDODAO implements InsightDAO {
             } elseif (is_array($insight->related_data)) {
                 if ($insight->related_data[0] instanceof User) {
                     $insight->related_data_type = "users";
+                } elseif (isset($insight->related_data['history'])) {
+                    $insight->related_data_type = "follower_count_history";
                 }
             }
             //assume insight came at same time of day as now for relative day notation

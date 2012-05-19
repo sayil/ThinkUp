@@ -1956,5 +1956,58 @@ class TwitterCrawler {
             }
             $days_ago++;
         }
+
+        //Follower count history milestones
+        $days_ago = 31;
+        while ($days_ago > -1) {
+            $insight_date = new DateTime();
+            $insight_date->modify('-'.$days_ago.' day');
+
+            $insight_day_of_week = (int) $insight_date->format('w');
+            //echo $days_ago." days ago, day ".$insight_day_of_week." of the week <br>";
+            if ($insight_day_of_week == 0) { //it's Sunday
+                $follower_count_dao = DAOFactory::getDAO('FollowerCountDAO');
+                //by week
+                $follower_count_history_by_week = $follower_count_dao->getHistory($this->instance->network_user_id,
+                $this->instance->network, 'WEEK', 5);
+                if ( isset($follower_count_history_by_week['milestone']) ) {
+                    $insight_text = $follower_count_history_by_week['milestone']['will_take'].' week';
+                    if ($follower_count_history_by_week['milestone']['will_take'] > 1) {
+                        $insight_text .= 's';
+                    }
+                    $insight_text .= ' till you reach '.
+                    number_format($follower_count_history_by_week['milestone']['next_milestone']);
+                    $insight_text .= ' followers at this rate.';
+
+                    $insight_date_formatted = $insight_date->format('Y-m-d');
+                    $insight_dao->insertInsight('follower_count_history_by_week_milestone', $this->instance->id,
+                    $insight_date_formatted, $insight_text, Insight::EMPHASIS_HIGH,
+                    serialize($follower_count_history_by_week));
+                }
+            }
+
+            $insight_day_of_month = (int) $insight_date->format('j');
+            if ($insight_day_of_month == 1) { //New month
+                $follower_count_dao = DAOFactory::getDAO('FollowerCountDAO');
+                //by week
+                $follower_count_history_by_month = $follower_count_dao->getHistory($this->instance->network_user_id,
+                $this->instance->network, 'MONTH', 5);
+                if ( isset($follower_count_history_by_month['milestone']) ) {
+                    $insight_text = $follower_count_history_by_month['milestone']['will_take'].' month';
+                    if ($follower_count_history_by_month['milestone']['will_take'] > 1) {
+                        $insight_text .= 's';
+                    }
+                    $insight_text .= ' till you reach '.
+                    number_format($follower_count_history_by_month['milestone']['next_milestone']);
+                    $insight_text .= ' followers at this rate.';
+
+                    $insight_date_formatted = $insight_date->format('Y-m-d');
+                    $insight_dao->insertInsight('follower_count_history_by_month_milestone', $this->instance->id,
+                    $insight_date_formatted, $insight_text, Insight::EMPHASIS_HIGH,
+                    serialize($follower_count_history_by_month));
+                }
+            }
+            $days_ago--;
+        }
     }
 }
