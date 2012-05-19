@@ -1880,7 +1880,7 @@ class TwitterCrawler {
             && $post->all_retweets >= $high_retweet_count_30_days->value) {
                 $insight_dao->insertInsight('retweet_high_30_day_'.$post->id, $this->instance->id,
                 $simplified_post_date, "New 30-day high! ".$post->all_retweets." people retweeted your tweet.",
-                Insight::EMPHASIS_MED, serialize($post));
+                Insight::EMPHASIS_HIGH, serialize($post));
 
                 $insight_dao->deleteInsight('retweet_high_7_day_'.$post->id, $this->instance->id,
                 $simplified_post_date);
@@ -1892,7 +1892,7 @@ class TwitterCrawler {
             && $post->all_retweets >= $high_retweet_count_7_days->value) {
                 $insight_dao->insertInsight('retweet_high_7_day_'.$post->id, $this->instance->id, $simplified_post_date,
                 "New 7-day high! ".$post->all_retweets." people retweeted your tweet.",
-                Insight::EMPHASIS_MED, serialize($post));
+                Insight::EMPHASIS_HIGH, serialize($post));
 
                 $insight_dao->deleteInsight('retweet_high_30_day_'.$post->id, $this->instance->id,
                 $simplified_post_date);
@@ -1965,7 +1965,7 @@ class TwitterCrawler {
             $follower_count_dao = DAOFactory::getDAO('FollowerCountDAO');
             //by week
             $follower_count_history_by_week = $follower_count_dao->getHistory($this->instance->network_user_id,
-            $this->instance->network, 'WEEK', 5);
+            $this->instance->network, 'WEEK', 15);
             if ( isset($follower_count_history_by_week['milestone']) ) {
                 $insight_text = "Upcoming milestone: ";
                 $insight_text .= $follower_count_history_by_week['milestone']['will_take'].' week';
@@ -1988,7 +1988,7 @@ class TwitterCrawler {
             $follower_count_dao = DAOFactory::getDAO('FollowerCountDAO');
             //by month
             $follower_count_history_by_month = $follower_count_dao->getHistory($this->instance->network_user_id,
-            $this->instance->network, 'MONTH', 5);
+            $this->instance->network, 'MONTH', 15);
             if ( isset($follower_count_history_by_month['milestone']) ) {
                 $insight_text = "Upcoming milestone: ";
                 $insight_text .= $follower_count_history_by_month['milestone']['will_take'].' month';
