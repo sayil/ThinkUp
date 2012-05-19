@@ -20,7 +20,7 @@
                   {/foreach}
                  <br><br><br>
             {/if}
-            
+
             {if $i->related_data_type eq 'post'}
             <br><br>
             <div style="background-color:white">
@@ -28,10 +28,10 @@
             </div>
             <br><br>
             {/if}
-            
+
             {if $i->related_data_type eq 'follower_count_history'}
                 <br><br>
-                <div id="follower_count_history_by_week_{$i->id}"></div>
+                <div id="follower_count_history_{$i->id}"></div>
                 
                 <script type="text/javascript">
                 // Load the Visualization API and the standard charts
@@ -44,17 +44,17 @@
     
                 function drawChart{/literal}{$i->id}() {literal}{
                 {/literal}
-                  var follower_count_history_by_week_data = new google.visualization.DataTable(
+                  var follower_count_history_data_{$i->id} = new google.visualization.DataTable(
                   {$i->related_data.vis_data});
-                  formatter.format(follower_count_history_by_week_data, 1);
-                  formatter_date.format(follower_count_history_by_week_data, 0);
+                  formatter.format(follower_count_history_data_{$i->id}, 1);
+                  formatter_date.format(follower_count_history_data_{$i->id}, 0);
                 {literal}
-                  var follower_count_history_by_week_chart = new google.visualization.ChartWrapper({
+                  var follower_count_history_chart_{/literal}{$i->id}{literal} = new google.visualization.ChartWrapper({
                   {/literal}
-                      containerId: 'follower_count_history_by_week_{$i->id}',
+                      containerId: 'follower_count_history_{$i->id}',
                       {literal}
                       chartType: 'LineChart',
-                      dataTable: follower_count_history_by_week_data,
+                      dataTable: follower_count_history_data_{/literal}{$i->id}{literal},
                       options: {
                           width: 325,
                           height: 250,
@@ -74,7 +74,7 @@
                           },
                       },
                   });
-                  follower_count_history_by_week_chart.draw();
+                  follower_count_history_chart_{/literal}{$i->id}{literal}.draw();
                   }
                   {/literal}
                 </script>
