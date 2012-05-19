@@ -87,6 +87,19 @@ class InsightMySQLDAO  extends PDODAO implements InsightDAO {
         return $insights;
     }
 
+    public function deleteInsight($slug, $instance_id, $date) {
+        $q = "DELETE FROM #prefix#insights WHERE ";
+        $q .= "slug=:slug AND date=:date AND instance_id=:instance_id";
+        $vars = array(
+            ':slug'=>$slug,
+            ':date'=>$date,
+            ':instance_id'=>$instance_id
+        );
+        $ps = $this->execute($q, $vars);
+        $result = $this->getUpdateCount($ps);
+        return ($result > 0);
+    }
+
     public function updateInsight($slug, $instance_id, $date, $text, $emphasis=Insight::EMPHASIS_LOW,
     $related_data=null) {
         $q = "UPDATE #prefix#insights SET text=:text, related_data=:related_data, emphasis=:emphasis ";

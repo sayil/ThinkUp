@@ -97,4 +97,19 @@ class TestOfInsightMySQLDAO extends ThinkUpUnitTestCase {
         $result = $dao->updateInsight('avg_replies_per_week', 1, '2012-05-10', 'ooooh burn');
         $this->assertFalse($result);
     }
+
+    public function testDeleteInsight() {
+        $dao = new InsightMySQLDAO();
+
+        //delete existing baseline
+        $result = $dao->deleteInsight('avg_replies_per_week', 1, '2012-05-01', 'LOLlerskates', Insight::EMPHASIS_MED);
+        $this->assertTrue($result);
+        //check that insight was deleted
+        $result = $dao->getInsight('avg_replies_per_week', 1, '2012-05-01');
+        $this->assertNull($result);
+
+        //delete nonexistent baseline
+        $result = $dao->deleteInsight('avg_replies_per_week', 1, '2012-05-10', 'ooooh burn');
+        $this->assertFalse($result);
+    }
 }
