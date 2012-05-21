@@ -1747,18 +1747,24 @@ class TwitterCrawler {
         return true;
     }
 
+    public function generateInsights($number_days=3) {
+        $this->logger->logUserSuccess("Calculating insights for last ".$number_days." days.",
+        __METHOD__.','.__LINE__);
+        self::generateInsightBaselines($number_days);
+        self::generateInsightFeedItems($number_days);
+    }
     /**
-     * Calculate and store insight baselines for the last 7 days.
+     * Calculate and store insight baselines for a specified number of days.
+     * @param int $number_days Number of days to backfill
      */
-    public function generateInsightBaselines() {
+    private function generateInsightBaselines($number_days=3) {
         $post_dao = DAOFactory::getDAO('PostDAO');
         $insight_baseline_dao = DAOFactory::getDAO('InsightBaselineDAO');
 
         $days_ago = 0;
         // Generate baseline post insights for the last 7 days
-        $this->logger->logUserSuccess("Calculating insight baselines for last 7 days.", __METHOD__.','.__LINE__);
 
-        while ($days_ago < 7) {
+        while ($days_ago < $number_days) {
             $since_date = date("Y-m-d", strtotime("-".$days_ago." day"));
 
             //Save average retweets over past 7 days
@@ -1819,20 +1825,19 @@ class TwitterCrawler {
         }
     }
     /**
-     * Calculate and store insights for the last 7 days.
+     * Calculate and store insights for a specified number of days.
+     * @param int $number_days Number of days to backfill
      */
-    public function generateInsights() {
+    private function generateInsightFeedItems($number_days=3) {
         $post_dao = DAOFactory::getDAO('PostDAO');
         $insight_baseline_dao = DAOFactory::getDAO('InsightBaselineDAO');
         $insight_dao = DAOFactory::getDAO('InsightDAO');
-
-        $this->logger->logUserSuccess("Calculating insights for last 7 days' worth of posts.", __METHOD__.','.__LINE__);
 
         // Get retweeted posts for last 7 days
         $posts = $post_dao->getMostRetweetedPostsInLastWeek($this->instance->network_username,
         $this->instance->network, 40, $is_public = false);
         $posts = $post_dao->getAllPostsByUsernameOrderedBy($this->instance->network_username, $network="twitter",
-        $count=0, $order_by="pub_date", $in_last_x_days = 7, $iterator = false, $is_public = false);
+        $count=0, $order_by="pub_date", $in_last_x_days = $number_days, $iterator = false, $is_public = false);
 
         $baseline_date = null;
         // foreach post
@@ -1933,7 +1938,7 @@ class TwitterCrawler {
         //Generate least likely followers insights
         $follow_dao = DAOFactory::getDAO('FollowDAO');
         $days_ago = 0;
-        while ($days_ago < 7) {
+        while ($days_ago < $number_days) {
             //For each of the past 7 days (remove this later & just do day by day?)
             //get least likely followers for that day
             $least_likely_followers = $follow_dao->getLeastLikelyFollowersByDay($this->instance->network_user_id,
@@ -1958,52 +1963,61 @@ class TwitterCrawler {
         }
 
         //Follower count history milestone
-        $insight_date = new DateTime();
-        $insight_day_of_week = (int) $insight_date->format('w');
+        $days_ago = $number_days;
+        while ($days_ago > -1) {
+            $insight_date = new DateTime();
+            $insight_date->modify('-'.$days_ago.' day');
+            $insight_day_of_week = (int) $insight_date->format('w');
 
-        if ($insight_day_of_week == 0) { //it's Sunday
-            $follower_count_dao = DAOFactory::getDAO('FollowerCountDAO');
-            //by week
-            $follower_count_history_by_week = $follower_count_dao->getHistory($this->instance->network_user_id,
-            $this->instance->network, 'WEEK', 15);
-            if ( isset($follower_count_history_by_week['milestone']) ) {
-                $insight_text = "Upcoming milestone: ";
-                $insight_text .= $follower_count_history_by_week['milestone']['will_take'].' week';
-                if ($follower_count_history_by_week['milestone']['will_take'] > 1) {
-                    $insight_text .= 's';
-                }
-                $insight_text .= ' till you reach '.
-                number_format($follower_count_history_by_week['milestone']['next_milestone']);
-                $insight_text .= ' followers at your current growth rate.';
-
+            if ($insight_day_of_week == 0) { //it's Sunday
+                $follower_count_dao = DAOFactory::getDAO('FollowerCountDAO');
                 $insight_date_formatted = $insight_date->format('Y-m-d');
-                $insight_dao->insertInsight('follower_count_history_by_week_milestone', $this->instance->id,
-                $insight_date_formatted, $insight_text, Insight::EMPHASIS_HIGH,
-                serialize($follower_count_history_by_week));
-            }
-        }
+                //by week
+                $follower_count_history_by_week = $follower_count_dao->getHistory($this->instance->network_user_id,
+                $this->instance->network, 'WEEK', 15, $insight_date_formatted);
+                if ( isset($follower_count_history_by_week['milestone'])
+                && $follower_count_history_by_week["milestone"]["will_take"] > 0
+                && $follower_count_history_by_month["milestone"]["next_milestone"] > 0 ) {
+                    $insight_text = "Upcoming milestone: ";
+                    $insight_text .= $follower_count_history_by_week['milestone']['will_take'].' week';
+                    if ($follower_count_history_by_week['milestone']['will_take'] > 1) {
+                        $insight_text .= 's';
+                    }
+                    $insight_text .= ' till you reach '.
+                    number_format($follower_count_history_by_week['milestone']['next_milestone']);
+                    $insight_text .= ' followers at your current growth rate.';
 
-        $insight_day_of_month = (int) $insight_date->format('j');
-        if ($insight_day_of_month == 1) { //It's the first day of the month
-            $follower_count_dao = DAOFactory::getDAO('FollowerCountDAO');
-            //by month
-            $follower_count_history_by_month = $follower_count_dao->getHistory($this->instance->network_user_id,
-            $this->instance->network, 'MONTH', 15);
-            if ( isset($follower_count_history_by_month['milestone']) ) {
-                $insight_text = "Upcoming milestone: ";
-                $insight_text .= $follower_count_history_by_month['milestone']['will_take'].' month';
-                if ($follower_count_history_by_month['milestone']['will_take'] > 1) {
-                    $insight_text .= 's';
+                    $insight_dao->insertInsight('follower_count_history_by_week_milestone', $this->instance->id,
+                    $insight_date_formatted, $insight_text, Insight::EMPHASIS_HIGH,
+                    serialize($follower_count_history_by_week));
                 }
-                $insight_text .= ' till you reach '.
-                number_format($follower_count_history_by_month['milestone']['next_milestone']);
-                $insight_text .= ' followers at your current growth rate.';
-
-                $insight_date_formatted = $insight_date->format('Y-m-d');
-                $insight_dao->insertInsight('follower_count_history_by_month_milestone', $this->instance->id,
-                $insight_date_formatted, $insight_text, Insight::EMPHASIS_HIGH,
-                serialize($follower_count_history_by_month));
             }
+
+            $insight_day_of_month = (int) $insight_date->format('j');
+            if ($insight_day_of_month == 1) { //it's the first day of the month
+                $follower_count_dao = DAOFactory::getDAO('FollowerCountDAO');
+                $insight_date_formatted = $insight_date->format('Y-m-d');
+                //by month
+                $follower_count_history_by_month = $follower_count_dao->getHistory($this->instance->network_user_id,
+                $this->instance->network, 'MONTH', 15, $insight_date_formatted);
+                if ( isset($follower_count_history_by_month['milestone'])
+                && $follower_count_history_by_month["milestone"]["will_take"] > 0
+                && $follower_count_history_by_month["milestone"]["next_milestone"] > 0) {
+                    $insight_text = "Upcoming milestone: ";
+                    $insight_text .= $follower_count_history_by_month['milestone']['will_take'].' month';
+                    if ($follower_count_history_by_month['milestone']['will_take'] > 1) {
+                        $insight_text .= 's';
+                    }
+                    $insight_text .= ' till you reach '.
+                    number_format($follower_count_history_by_month['milestone']['next_milestone']);
+                    $insight_text .= ' followers at your current growth rate.';
+
+                    $insight_dao->insertInsight('follower_count_history_by_month_milestone', $this->instance->id,
+                    $insight_date_formatted, $insight_text, Insight::EMPHASIS_HIGH,
+                    serialize($follower_count_history_by_month));
+                }
+            }
+            $days_ago--;
         }
     }
 }
